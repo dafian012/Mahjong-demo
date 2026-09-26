@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mahjong Ways 2 - DEMO</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    background: radial-gradient(circle at 50% 0%, #1a3a1a, #0a1a0a 70%);
+    font-family: 'Trebuchet MS', sans-serif;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    color: #fff; padding: 10px; overflow-x: hidden;
+  }
+  .demo-tag {
+    position: fixed; top: 8px; left: 50%; transform: translateX(-50%);
+    background: #ff2200; color: #fff; font-weight: bold; font-size: 11px;
+    padding: 3px 12px; border-radius: 20px; letter-spacing: 2px;
+    box-shadow: 0 0 12px #ff2200; z-index: 999;
+  }
+  .game-wrap {
+    width: 100%; max-width: 520px; margin-top: 36px;
+    background: linear-gradient(180deg, #7b0f0f, #4a0808);
+    border: 3px solid #ffd700;
+    border-radius: 22px; padding: 12px;
+    box-shadow: 0 0 30px rgba(255,215,0,.4), inset 0 0 40px rgba(0,0,0,.6);
+    position: relative;
+  }
+  .top-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #000; border-radius: 12px; padding: 8px 12px; margin-bottom: 10px;
+    border: 1px solid #ffd70055;
+  }
+  .balance-box { font-size: 13px; color: #ffd700; }
+  .balance-box b { font-size: 18px; color: #fff; }
+  .user-box { font-size: 12px; color: #9f9; text-align: right; }
+  .user-box small { display:block; color: #666; }
+
+  .reels {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    background: #0a0a0a;
+    padding: 8px; border-radius: 14px;
+    border: 2px solid #ffd70055;
+    position: relative;
+    overflow: hidden;
+  }
+  .reel {
+    display: grid; grid-template-rows: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .cell {
+    aspect-ratio: 1/1;
+    background: linear-gradient(180deg, #fff8e0, #e8d9a0);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,.2), 0 1px 2px rgba(0,0,0,.4);
+    transition: transform .1s;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .cell svg { width: 88%; height: 88%; display: block; }
+  .cell.win {
+    animation: pulseWin .4s ease-in-out infinite alternate;
+    z-index: 2;
+  }
+  @keyframes pulseWin {
+    from { box-shadow: 0 0 8px #ff0, inset 0 0 8px #ff08; transform: scale(1); }
+    to   { box-shadow: 0 0 22px #ff0, inset 0 0 16px #ff0a; transform: scale(1.06); }
+  }
+  .cell.scatter-hit {
+    animation: scatterPulse .35s ease-in-out infinite alternate;
+    z-index: 3;
+  }
+  @keyframes scatterPulse {
+    from { box-shadow: 0 0 10px #0f0, inset 0 0 10px #0f08; transform: scale(1) rotate(-2deg); }
+    to   { box-shadow: 0 0 30px #0f0, 0 0 60px #0f0a, inset 0 0 20px #0f0a; transform: scale(1.15) rotate(2deg); }
+  }
+  .scatter-flash {
+    position: absolute; inset: 0;
+    background: radial-gradient(circle, rgba(0,255,120,.7), rgba(0,255,120,0) 70%);
+    pointer-events: none; opacity: 0;
+    z-index: 5;
+  }
+  .scatter-flash.fire { animation: flashScatter .8s ease-out; }
+  @keyframes flashScatter {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  .confetti {
+    position: absolute; width: 18px; height: 24px;
+    background: linear-gradient(180deg, #fffbe0, #ffd700);
+    border-radius: 3px; pointer-events: none; z-index: 6;
+    font-size: 14px; display:flex; align-items:center; justify-content:center;
+    animation: confFall linear forwards;
+  }
+  @keyframes confFall {
+    from { transform: translateY(-40px) rotate(0deg); opacity: 1; }
+    to   { transform: translateY(400px) rotate(720deg); opacity: 0; }
+  }
+
+  .info-strip {
+    display: flex; justify-content: space-between; gap: 8px; margin: 10px 0;
+    font-size: 12px;
+  }
+  .info-strip .pill {
+    flex: 1; background: #000; border: 1px solid #ffd70055;
+    border-radius: 20px; padding: 6px; text-align: center;
+  }
+  .info-strip .pill b { color: #ffd700; }
+
+  .controls { display: flex; gap: 8px; align-items: stretch; margin-top: 4px; }
+  .bet-box {
+    flex: 1; background: #000; border-radius: 12px; border: 1px solid #ffd70055;
+    display: flex; align-items: center; justify-content: space-between; padding: 4px;
+  }
+  .bet-box button {
+    width: 36px; height: 36px; border-radius: 8px; border: none;
+    background: #ffd700; color: #000; font-size: 20px; font-weight: bold;
+    cursor: pointer;
+  }
+  .bet-box .val { color: #fff; font-weight: bold; font-size: 14px; text-align: center; }
+  .bet-box .val small { display:block; color:#888; font-size: 9px; }
+
+  .spin-btn {
+    width: 84px; height: 84px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe97a, #d4a400 60%, #8a6a00);
+    border: 3px solid #fff3a0;
+    font-weight: 900; font-size: 13px; color: #3a1e00;
+    cursor: pointer; box-shadow: 0 0 20px #ffd70088;
+    transition: transform .1s;
+    flex-shrink: 0;
+  }
+  .spin-btn:active { transform: scale(.95); }
+  .spin-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .spin-btn.freespin {
+    background: radial-gradient(circle at 35% 30%, #a0ffa0, #00a000 60%, #005000);
+    color: #fff; border-color: #aaffaa;
+  }
+
+  .footer-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .toggle {
+    flex: 1; min-width: 100px; background: #000; border: 1px solid #ffd70044;
+    border-radius: 20px; padding: 8px; color: #ccc; font-size: 11px;
+    cursor: pointer; text-align: center;
+  }
+  .toggle.on { background: #ffd700; color: #000; font-weight: bold; }
+
+  .auto-row {
+    display: flex; gap: 6px; margin-top: 10px;
+    background: #000; border: 1px solid #ffd70044;
+    border-radius: 20px; padding: 6px; align-items: center;
+  }
+  .auto-row label { color: #ffd700; font-size: 11px; padding-left: 8px; font-weight: bold; }
+  .auto-row input {
+    flex: 1; background: #111; border: 1px solid #333; border-radius: 12px;
+    color: #0f0; padding: 6px 10px; font-family: monospace;
+    outline: none; font-size: 13px;
+  }
+  .auto-row input:focus { border-color: #00ffcc; }
+  .auto-row button {
+    background: #00ffcc; color: #000; border: none; border-radius: 12px;
+    padding: 7px 14px; font-weight: bold; cursor: pointer; font-size: 12px;
+  }
+  .auto-row button.stop { background: #ff4444; color: #fff; }
+  .auto-row button:disabled { opacity: .4; cursor: not-allowed; }
+  .auto-status { color: #9cf; font-size: 11px; padding: 0 8px; min-width: 60px; text-align:center; }
+
+  #toast {
+    position: fixed; top: 60px; left: 50%; transform: translateX(-50%) scale(0);
+    background: #000c; border: 2px solid #ffd700; color: #ffd700;
+    padding: 10px 22px; border-radius: 30px; font-weight: bold;
+    transition: transform .25s; pointer-events: none; z-index: 50;
+    font-size: 15px; white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) scale(1); }
+  #toast.win { border-color: #0f0; color: #0f0; box-shadow: 0 0 20px #0f0a; }
+  #toast.scatter { border-color: #ff0; color: #ff0; box-shadow: 0 0 20px #ff0a; }
+
+  .fs-banner {
+    position: absolute; inset: 0; background: #000000cc;
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column; border-radius: 14px; z-index: 20;
+    border: 2px solid #ffd700;
+  }
+  .fs-banner.show { display: flex; animation: fsIn .5s ease-out; }
+  @keyframes fsIn {
+    0% { transform: scale(.4); opacity: 0; }
+    60% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+  .fs-banner h2 { color: #ffd700; font-size: 26px; text-shadow: 0 0 12px #ffd700; }
+  .fs-banner p { color: #fff; margin-top: 6px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="demo-tag">⚠️ DEMO ONLY — NOT FOR REAL MONEY ⚠️</div>
+
+<div class="game-wrap">
+  <div class="top-bar">
+    <div class="balance-box">SALDO<br><b id="balance">10.000</b> IDR</div>
+    <div class="user-box" id="userBox">
+      <small>PEMAIN</small>
+      <span id="userName">Memuat...</span>
+    </div>
+  </div>
+
+  <div class="reels" id="reels">
+    <div class="scatter-flash" id="scatterFlash"></div>
+    <div class="fs-banner" id="fsBanner">
+      <h2>🀄 FREE SPIN! 🀄</h2>
+      <p id="fsInfo">10 Spin Gratis</p>
+    </div>
+  </div>
+
+  <div class="info-strip">
+    <div class="pill">WIN<br><b id="winAmount">0</b></div>
+    <div class="pill">MULTI<br><b id="multi">x1</b></div>
+    <div class="pill">FS<br><b id="fsLeft">0</b></div>
+  </div>
+
+  <div class="controls">
+    <div class="bet-box">
+      <button onclick="changeBet(-1)">−</button>
+      <div class="val">
+        <small>BET (IDR)</small>
+        <span id="betVal">400</span>
+      </div>
+      <button onclick="changeBet(1)">+</button>
+    </div>
+    <button class="spin-btn" id="spinBtn" onclick="spin()">SPIN</button>
+  </div>
+
+  <div class="auto-row">
+    <label>AUTO</label>
+    <input type="number" id="autoCount" value="10" min="1" max="999" />
+    <button id="autoBtn" onclick="toggleAuto()">▶ GO</button>
+    <span class="auto-status" id="autoStatus">siap</span>
+  </div>
+
+  <div class="footer-row">
+    <div class="toggle" id="fastToggle" onclick="toggleFast()">⚡ FAST SPIN: OFF</div>
+    <div class="toggle" id="soundToggle" onclick="toggleSound()">🔊 SUARA: ON</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============ SVG TILE ============ */
+const SVG_TILE = {
+  mahjong: `<svg viewBox="0 0 64 64"><defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaffea"/><stop offset="1" stop-color="#7fe07f"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="8" fill="url(#mg)" stroke="#2d8a2d" stroke-width="3"/><text x="32" y="46" font-size="34" text-anchor="middle" fill="#0a4d0a" font-family="serif" font-weight="bold">🀄</text><circle cx="32" cy="14" r="2" fill="#0a4d0a"/></svg>`,
+  dragon: `<svg viewBox="0 0 64 64"><defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2b0"/><stop offset="1" stop-color="#e0a000"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="8" fill="url(#dg)" stroke="#8a5a00" stroke-width="3"/><text x="32" y="46" font-size="36" text-anchor="middle">🐉</text></svg>`,
+  gold: `<svg viewBox="0 0 64 64"><defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe98a"/><stop offset="1" stop-color="#c08000"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="8" fill="url(#gg)" stroke="#7a5000" stroke-width="3"/><text x="32" y="45" font-size="32" text-anchor="middle">💰</text></svg>`,
+  ingot: `<svg viewBox="0 0 64 64"><defs><linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffefc0"/><stop offset="1" stop-color="#b08030"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="8" fill="url(#ig)" stroke="#6a4a10" stroke-width="3"/><text x="32" y="45" font-size="32" text-anchor="middle">🪙</text></svg>`,
+  red: `<svg viewBox="0 0 64 64"><rect x="4" y="4" width="56" height="56" rx="8" fill="#e04040" stroke="#801010" stroke-width="3"/><text x="32" y="44" font-size="30" text-anchor="middle" fill="#fff" font-family="serif" font-weight="bold">中</text></svg>`,
+  green: `<svg viewBox="0 0 64 64"><rect x="4" y="4" width="56" height="56" rx="8" fill="#40c040" stroke="#106010" stroke-width="3"/><text x="32" y="44" font-size="30" text-anchor="middle" fill="#fff" font-family="serif" font-weight="bold">發</text></svg>`,
+  blue: `<svg viewBox="0 0 64 64"><rect x="4" y="4" width="56" height="56" rx="8" fill="#4070e0" stroke="#102a80" stroke-width="3"/><text x="32" y="44" font-size="30" text-anchor="middle" fill="#fff" font-family="serif" font-weight="bold">白</text></svg>`,
+  purple: `<svg viewBox="0 0 64 64"><rect x="4" y="4" width="56" height="56" rx="8" fill="#9040c0" stroke="#401060" stroke-width="3"/><text x="32" y="44" font-size="30" text-anchor="middle" fill="#fff" font-family="serif" font-weight="bold">南</text></svg>`
+};
+
+const SYMBOLS = {
+  mahjong: { emoji:'🀄', weight: 3,  pay: {3:1, 4:5, 5:20} },
+  dragon:  { emoji:'🐉', weight: 6,  pay: {3:0.5,4:2,5:8} },
+  gold:    { emoji:'💰', weight: 8,  pay: {3:0.4,4:1.5,5:5} },
+  ingot:   { emoji:'🪙', weight: 10, pay: {3:0.3,4:1,5:4} },
+  red:     { emoji:'🔴', weight: 15, pay: {3:0.2,4:0.8,5:3} },
+  green:   { emoji:'🟢', weight: 15, pay: {3:0.2,4:0.8,5:3} },
+  blue:    { emoji:'🔵', weight: 18, pay: {3:0.15,4:0.6,5:2.5} },
+  purple:  { emoji:'🟣', weight: 18, pay: {3:0.15,4:0.6,5:2.5} },
+};
+const SYM_KEYS = Object.keys(SYMBOLS);
+const BETS = [400, 800, 1200, 2000, 4000, 8000, 20000, 50000, 100000, 500000, 1000000];
+let betIndex = 0;
+let balance = 10000;
+let userName = localStorage.getItem('mj_user') || null;
+let winRate = 35;
+let fastSpin = false;
+let soundOn = true;
+let freeSpinsLeft = 0;
+let freeSpinTotal = 0;
+let multiplier = 1;
+let spinning = false;
+let autoTotal = 0, autoDone = 0, autoRunning = false, autoCancel = false;
+const ROWS = 4, COLS = 5;
+
+/* ============ AUDIO ============ */
+let actx = null;
+function getAC(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function beep(freq, dur=0.08, type='sine', vol=0.15){
+  if(!soundOn) return;
+  try{
+    const c = getAC(); const o = c.createOscillator(); const g = c.createGain();
+    o.type=type; o.frequency.value=freq; o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(vol, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime+dur);
+    o.start(); o.stop(c.currentTime+dur);
+  }catch(e){}
+}
+function playSpinSnd(){ beep(220, .05, 'square', .06); }
+function playWinSnd(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.15,'triangle',.2), i*70)); }
+function playScatterSnd(){ [523,659,784,1047,1319,1568].forEach((f,i)=>setTimeout(()=>beep(f,.2,'sine',.25), i*80)); }
+function playClickSnd(){ beep(800,.04,'square',.1); }
+
+/* ============ UI ============ */
+function toast(msg, cls=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show '+cls;
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>t.className='', 1500);
+}
+function changeBet(dir){
+  if(autoRunning) return;
+  playClickSnd();
+  betIndex = Math.max(0, Math.min(BETS.length-1, betIndex+dir));
+  document.getElementById('betVal').textContent = BETS[betIndex].toLocaleString('id-ID');
+  updateBalance();
+}
+function updateBalance(){
+  document.getElementById('balance').textContent = balance.toLocaleString('id-ID');
+}
+function toggleFast(){
+  fastSpin = !fastSpin;
+  const el = document.getElementById('fastToggle');
+  el.className = 'toggle' + (fastSpin?' on':'');
+  el.textContent = `⚡ FAST SPIN: ${fastSpin?'ON':'OFF'}`;
+  playClickSnd();
+}
+function toggleSound(){
+  soundOn = !soundOn;
+  const el = document.getElementById('soundToggle');
+  el.className = 'toggle' + (soundOn?' on':'');
+  el.textContent = `🔊 SUARA: ${soundOn?'ON':'OFF'}`;
+  if(soundOn) playClickSnd();
+}
+async function toggleAuto(){
+  if(autoRunning){ autoCancel = true; return; }
+  const n = Math.max(1, Math.min(999, parseInt(document.getElementById('autoCount').value)||10));
+  autoTotal = n; autoDone = 0; autoRunning = true; autoCancel = false;
+  const btn = document.getElementById('autoBtn');
+  btn.textContent = '⏹ STOP'; btn.classList.add('stop');
+  document.getElementById('autoCount').disabled = true;
+  while(autoDone < autoTotal && !autoCancel){
+    document.getElementById('autoStatus').textContent = `${autoDone+1}/${autoTotal}`;
+    await spin(true);
+    autoDone++;
+    await new Promise(r=>setTimeout(r, fastSpin ? 200 : 600));
+  }
+  autoRunning = false;
+  btn.textContent = '▶ GO'; btn.classList.remove('stop');
+  document.getElementById('autoCount').disabled = false;
+  document.getElementById('autoStatus').textContent = autoCancel ? 'di-stop' : 'selesai ✓';
+  autoCancel = false;
+}
+
+/* ============ BACKEND ============ */
+async function registerUser(){
+  if(userName){
+    document.getElementById('userName').textContent = userName;
+    await refreshConfig();
+    return;
+  }
+  const autoName = 'Pemain' + Math.floor(1000+Math.random()*9000);
+  try {
+    const r = await fetch('/api/register', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name: autoName })
+    });
+    const d = await r.json();
+    userName = d.name || autoName;
+    winRate = d.winRate ?? 35;
+  } catch(e){ userName = autoName; }
+  localStorage.setItem('mj_user', userName);
+  document.getElementById('userName').textContent = userName;
+}
+async function refreshConfig(){
+  try {
+    const r = await fetch('/api/config?name='+encodeURIComponent(userName));
+    const d = await r.json();
+    if(typeof d.winRate === 'number') winRate = d.winRate;
+  } catch(e){}
+}
+
+/* ============ REEL LOGIC ============ */
+function pickSymbol(){
+  const total = SYM_KEYS.reduce((s,k)=>s+SYMBOLS[k].weight,0);
+  let r = Math.random()*total;
+  for(const k of SYM_KEYS){ r -= SYMBOLS[k].weight; if(r<=0) return k; }
+  return SYM_KEYS[0];
+}
+function randomGrid(){
+  const g = [];
+  for(let c=0;c<COLS;c++){ g.push([]); for(let r=0;r<ROWS;r++) g[c].push(pickSymbol()); }
+  return g;
+}
+function forceGrid(winType){
+  const g = randomGrid();
+  if(winType === 'win'){
+    const s = ['gold','ingot','red','green','blue','purple'][Math.floor(Math.random()*6)];
+    const row = Math.floor(Math.random()*ROWS);
+    g[0][row]=s; g[1][row]=s; g[2][row]=s;
+    if(Math.random()<0.4) g[3][row]=s;
+    if(Math.random()<0.15) g[4][row]=s;
+  } else if(winType === 'scatter'){
+    let n = 3 + Math.floor(Math.random()*2);
+    const positions = [];
+    for(let c=0;c<COLS;c++) for(let r=0;r<ROWS;r++) positions.push([c,r]);
+    for(let i=positions.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [positions[i],positions[j]]=[positions[j],positions[i]]; }
+    for(let i=0;i<n;i++){ const [c,r]=positions[i]; g[c][r]='mahjong'; }
+  }
+  if(winType === 'lose'){
+    for(let c=0;c<COLS;c++) for(let r=0;r<ROWS;r++) if(g[c][r]==='mahjong') g[c][r]=pickSymbol();
+    for(let r=0;r<ROWS;r++){
+      const s=g[0][r];
+      if(g[1][r]===s && g[2][r]===s) g[2][r]=pickSymbol();
+    }
+  }
+  return g;
+}
+
+/* ============ WIN CHECK ============ */
+function checkWins(grid){
+  let totalWin = 0;
+  const winCells = new Set();
+  for(let r=0;r<ROWS;r++){
+    const s = grid[0][r];
+    if(s==='mahjong') continue;
+    let count = 1;
+    for(let c=1;c<COLS;c++){
+      if(grid[c][r]===s || grid[c][r]==='dragon') count++;
+      else break;
+    }
+    if(count>=3){
+      const pay = SYMBOLS[s]?.pay?.[count] || 0;
+      if(pay>0){
+        totalWin += pay * BETS[betIndex];
+        for(let c=0;c<count;c++) winCells.add(`${c}-${r}`);
+      }
+    }
+  }
+  let scatter = 0;
+  const scatterCells = [];
+  for(let c=0;c<COLS;c++) for(let r=0;r<ROWS;r++) if(grid[c][r]==='mahjong'){ scatter++; scatterCells.push(`${c}-${r}`); }
+  return { totalWin, winCells, scatter, scatterCells };
+}
+
+/* ============ RENDER ============ */
+function buildReels(){
+  const wrap = document.getElementById('reels');
+  wrap.querySelectorAll('.reel').forEach(e=>e.remove());
+  for(let c=0;c<COLS;c++){
+    const reel = document.createElement('div');
+    reel.className = 'reel'; reel.dataset.col = c;
+    for(let r=0;r<ROWS;r++){
+      const cell = document.createElement('div');
+      cell.className='cell'; cell.dataset.row = r;
+      cell.innerHTML = SVG_TILE.blue;
+      reel.appendChild(cell);
+    }
+    wrap.appendChild(reel);
+  }
+}
+function renderGrid(grid, winCells=new Set(), scatterCells=new Set()){
+  document.querySelectorAll('.reel').forEach(reel=>{
+    const c = +reel.dataset.col;
+    reel.querySelectorAll('.cell').forEach(cell=>{
+      const r = +cell.dataset.row;
+      const sym = grid[c][r];
+      cell.innerHTML = SVG_TILE[sym];
+      cell.className = 'cell';
+      if(winCells.has(`${c}-${r}`)) cell.classList.add('win');
+      if(scatterCells.has(`${c}-${r}`)) cell.classList.add('scatter-hit');
+    });
+  });
+}
+function fireScatter(){
+  const flash = document.getElementById('scatterFlash');
+  flash.classList.remove('fire');
+  void flash.offsetWidth;
+  flash.classList.add('fire');
+  const wrap = document.getElementById('reels');
+  for(let i=0;i<30;i++){
+    const cf = document.createElement('div');
+    cf.className = 'confetti';
+    cf.textContent = ['🀄','🐉','💰','🪙'][Math.floor(Math.random()*4)];
+    cf.style.left = Math.random()*100 + '%';
+    cf.style.top = '-30px';
+    cf.style.animationDuration = (1.2 + Math.random()*1.2) + 's';
+    cf.style.animationDelay = (Math.random()*0.4) + 's';
+    wrap.appendChild(cf);
+    setTimeout(()=>cf.remove(), 2600);
+  }
+}
+
+/* ============ SPIN ============ */
+async function spin(isAuto=false){
+  if(spinning) return;
+  if(freeSpinsLeft<=0 && balance < BETS[betIndex]){ toast('Saldo kurang bro', 'win'); if(autoRunning) autoCancel=true; return; }
+  spinning = true;
+  const btn = document.getElementById('spinBtn');
+  btn.disabled = true;
+  document.getElementById('winAmount').textContent = '0';
+
+  const isFree = freeSpinsLeft>0;
+  if(!isFree){ balance -= BETS[betIndex]; updateBalance(); }
+
+  const roll = Math.random()*100;
+  let outcome = 'lose';
+  if(roll < winRate) outcome = 'win';
+  if(outcome==='win' && Math.random() < 0.08) outcome = 'scatter';
+
+  const spinDuration = fastSpin ? 350 : 900;
+  const interval = fastSpin ? 35 : 65;
+  const startTime = Date.now();
+  const spinners = setInterval(()=>{
+    const g = randomGrid();
+    renderGrid(g);
+    playSpinSnd();
+    if(Date.now() - startTime > spinDuration){ clearInterval(spinners); }
+  }, interval);
+
+  await new Promise(r=>setTimeout(r, spinDuration + 80));
+
+  const finalGrid = forceGrid(outcome);
+  const { totalWin, winCells, scatter, scatterCells } = checkWins(finalGrid);
+  renderGrid(finalGrid, winCells, new Set());
+
+  if(scatter >= 3){
+    await new Promise(r=>setTimeout(r, 200));
+    renderGrid(finalGrid, winCells, new Set(scatterCells));
+    fireScatter();
+    playScatterSnd();
+    await new Promise(r=>setTimeout(r, 1500));
+
+    freeSpinsLeft += 10;
+    freeSpinTotal = 10;
+    multiplier = Math.min(multiplier*2, 10);
+    document.getElementById('multi').textContent = 'x' + multiplier;
+    showFSBanner(10);
+    toast('🀄 SCATTER ' + scatter + 'x — FREE SPIN 10!', 'scatter');
+  }
+
+  const finalWin = totalWin * multiplier;
+  if(finalWin > 0){
+    balance += finalWin;
+    document.getElementById('winAmount').textContent = finalWin.toLocaleString('id-ID');
+    playWinSnd();
+    if(scatter < 3) toast('MENANG ' + finalWin.toLocaleString('id-ID') + ' IDR! 🎉', 'win');
+  } else {
+    if(!fastSpin && !isAuto) toast('Belum hoki, coba lagi 🀄');
+  }
+  updateBalance();
+
+  if(isFree) freeSpinsLeft--;
+  document.getElementById('fsLeft').textContent = freeSpinsLeft;
+
+  if(freeSpinsLeft<=0 && freeSpinTotal>0){
+    freeSpinTotal = 0; multiplier = 1;
+    document.getElementById('multi').textContent = 'x1';
+  }
+
+  spinning = false;
+  btn.disabled = false;
+  if(freeSpinsLeft>0){
+    btn.classList.add('freespin');
+    btn.textContent = `FS ${freeSpinsLeft}`;
+  } else {
+    btn.classList.remove('freespin');
+    btn.textContent = 'SPIN';
+  }
+}
+function showFSBanner(n){
+  const b = document.getElementById('fsBanner');
+  document.getElementById('fsInfo').textContent = `${n} SPIN GRATIS — MULTIPLIER AKTIF!`;
+  b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'), 2200);
+}
+
+/* ============ INIT ============ */
+async function init(){
+  buildReels();
+  renderGrid(randomGrid());
+  await registerUser();
+  setInterval(refreshConfig, 10000);
+  updateBalance();
+  document.getElementById('betVal').textContent = BETS[betIndex].toLocaleString('id-ID');
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "mahjong-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Demo slot Mahjong Ways 2 with Telegram control bot",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
